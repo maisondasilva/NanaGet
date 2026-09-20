@@ -22,19 +22,11 @@
 
 #include "NanaGetResources.h"
 
-//namespace
-//{
-//    // {CCD5AA13-D01B-494F-A5E1-3E373234857B}
-//    const GUID NotifyIconGuid =
-//    {
-//        0xccd5aa13,
-//        0xd01b,
-//        0x494f,
-//        { 0xa5, 0xe1, 0x3e, 0x37, 0x32, 0x34, 0x85, 0x7b }
-//    };
-//
-//    const UINT NotifyIconCallbackMessage = WM_APP + 0x100;
-//}
+namespace
+{
+    const UINT NotifyIconId = 1;
+    const UINT NotifyIconCallbackMessage = WM_APP + 0x100;
+}
 
 namespace NanaGet
 {
@@ -53,7 +45,8 @@ namespace NanaGet
 
         BEGIN_MSG_MAP(MainWindow)
             MSG_WM_CREATE(OnCreate)
-            //MESSAGE_HANDLER_EX(NotifyIconCallbackMessage, OnNotifyIcon)
+            MESSAGE_HANDLER_EX(NotifyIconCallbackMessage, OnNotifyIcon)
+            MESSAGE_HANDLER_EX(this->m_TaskbarCreatedMessage, OnTaskbarCreated)
             MSG_WM_DESTROY(OnDestroy)
 
             COMMAND_ID_HANDLER(ID_FILE_NEW, OnNewTask)
@@ -67,10 +60,15 @@ namespace NanaGet
         int OnCreate(
             LPCREATESTRUCT lpCreateStruct);
 
-        /*LRESULT OnNotifyIcon(
+        LRESULT OnNotifyIcon(
             UINT uMsg,
             WPARAM wParam,
-            LPARAM lParam);*/
+            LPARAM lParam);
+
+        LRESULT OnTaskbarCreated(
+            UINT uMsg,
+            WPARAM wParam,
+            LPARAM lParam);
 
         void OnDestroy();
 
@@ -95,6 +93,7 @@ namespace NanaGet
     private:
 
         WTL::CIcon m_ApplicationIcon;
+        UINT m_TaskbarCreatedMessage;
 
         HWND CreateXamlDialog();
 
@@ -103,6 +102,8 @@ namespace NanaGet
             _In_ int Width,
             _In_ int Height,
             _In_ LPVOID Content);
+
+        void AddNotifyIcon();
     };
 }
 
@@ -152,63 +153,69 @@ int NanaGet::MainWindow::OnCreate(
         ::MulDiv(540, DpiValue, USER_DEFAULT_SCREEN_DPI),
         SWP_NOMOVE | SWP_NOZORDER | SWP_NOACTIVATE);
 
-    /*NOTIFYICONDATAW NotifyIconData = { 0 };
-    NotifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
-    NotifyIconData.hWnd = this->m_hWnd;
-    NotifyIconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP;
-    NotifyIconData.uFlags |= NIF_GUID | NIF_SHOWTIP;
-    NotifyIconData.uCallbackMessage = NotifyIconCallbackMessage;
-    NotifyIconData.hIcon = this->m_ApplicationIcon.m_hIcon;
-    ::wcscpy_s(NotifyIconData.szTip, L"NanaGet");
-    NotifyIconData.guidItem = NotifyIconGuid;
-    winrt::check_bool(::Shell_NotifyIconW(NIM_DELETE, &NotifyIconData));
-    winrt::check_bool(::Shell_NotifyIconW(NIM_ADD, &NotifyIconData));
+    this->m_TaskbarCreatedMessage =
+        ::RegisterWindowMessageW(L"TaskbarCreated");
 
-    NotifyIconData.uVersion = NOTIFYICON_VERSION_4;
-    winrt::check_bool(::Shell_NotifyIconW(NIM_SETVERSION, &NotifyIconData));*/
+    // Try best to add the notification icon when creating the main window.
+    this->AddNotifyIcon();
 
     return 0;
 }
 
-//LRESULT NanaGet::MainWindow::OnNotifyIcon(
-//    UINT uMsg,
-//    WPARAM wParam,
-//    LPARAM lParam)
-//{
-//    UNREFERENCED_PARAMETER(uMsg);
-//    UNREFERENCED_PARAMETER(wParam);
-//
-//    switch (LOWORD(lParam))
-//    {
-//    case NIN_SELECT:
-//    {
-//        this->ShowWindow(
-//            ::IsWindowVisible(this->m_hWnd)
-//            ? SW_HIDE
-//            : SW_SHOW);
-//
-//        break;
-//    }
-//    case WM_CONTEXTMENU:
-//    {
-//        ::SetForegroundWindow(this->m_hWnd);
-//
-//        break;
-//    }
-//    default:
-//        break;
-//    }
-//
-//    return 0;
-//}
+LRESULT NanaGet::MainWindow::OnNotifyIcon(
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(uMsg);
+    UNREFERENCED_PARAMETER(wParam);
+
+    switch (LOWORD(lParam))
+    {
+    case NIN_SELECT:
+    {
+        this->ShowWindow(
+            ::IsWindowVisible(this->m_hWnd)
+            ? SW_HIDE
+            : SW_SHOW);
+
+        break;
+    }
+    case WM_CONTEXTMENU:
+    {
+        ::SetForegroundWindow(this->m_hWnd);
+
+        break;
+    }
+    default:
+        break;
+    }
+
+    return 0;
+}
+
+LRESULT NanaGet::MainWindow::OnTaskbarCreated(
+    UINT uMsg,
+    WPARAM wParam,
+    LPARAM lParam)
+{
+    UNREFERENCED_PARAMETER(uMsg);
+    UNREFERENCED_PARAMETER(wParam);
+    UNREFERENCED_PARAMETER(lParam);
+
+    // Try best to add the notification icon after Explorer restarts.
+    this->AddNotifyIcon();
+
+    return 0;
+}
 
 void NanaGet::MainWindow::OnDestroy()
 {
-    /*NOTIFYICONDATAW NotifyIconData = { 0 };
+    NOTIFYICONDATAW NotifyIconData = {};
     NotifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
-    NotifyIconData.uFlags = NIF_GUID;
-    NotifyIconData.guidItem = NotifyIconGuid;
-    ::Shell_NotifyIconW(NIM_DELETE, &NotifyIconData);*/
+    NotifyIconData.hWnd = this->m_hWnd;
+    NotifyIconData.uID = NotifyIconId;
+    ::Shell_NotifyIconW(NIM_DELETE, &NotifyIconData);
 
     ::PostQuitMessage(0);
 }
@@ -365,6 +372,25 @@ int NanaGet::MainWindow::ShowXamlDialog(
     ::SetActiveWindow(this->m_hWnd);
 
     return Result;
+}
+
+void NanaGet::MainWindow::AddNotifyIcon()
+{
+    NOTIFYICONDATAW NotifyIconData = {};
+    NotifyIconData.cbSize = sizeof(NOTIFYICONDATAW);
+    NotifyIconData.hWnd = this->m_hWnd;
+    NotifyIconData.uID = NotifyIconId;
+    NotifyIconData.uFlags = NIF_MESSAGE | NIF_ICON | NIF_TIP | NIF_SHOWTIP;
+    NotifyIconData.uCallbackMessage = NotifyIconCallbackMessage;
+    NotifyIconData.hIcon = this->m_ApplicationIcon.m_hIcon;
+    ::wcscpy_s(NotifyIconData.szTip, L"NanaGet");
+    if (!::Shell_NotifyIconW(NIM_ADD, &NotifyIconData))
+    {
+        return;
+    }
+
+    NotifyIconData.uVersion = NOTIFYICON_VERSION_4;
+    ::Shell_NotifyIconW(NIM_SETVERSION, &NotifyIconData);
 }
 
 namespace
