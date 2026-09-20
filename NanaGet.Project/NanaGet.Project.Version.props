@@ -12,7 +12,7 @@
   <PropertyGroup>
     <NanaGetMajorVersion>1</NanaGetMajorVersion>
     <NanaGetMinorVersion>3</NanaGetMinorVersion>
-    <NanaGetBuildNumberDate>2026-09-20</NanaGetBuildNumberDate>
+    <!-- <NanaGetBuildNumberDate>2026-09-20</NanaGetBuildNumberDate> -->
     <NanaGetVersionTag>Update 2</NanaGetVersionTag>
   </PropertyGroup>
 </Project>
