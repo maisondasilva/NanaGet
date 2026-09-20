@@ -17,7 +17,6 @@
     <HoursBetweenUpdateChecks>0</HoursBetweenUpdateChecks>
     <AppxBundle>Always</AppxBundle>
     <AppxBundleAutoResourcePackageQualifiers>DXFeatureLevel</AppxBundleAutoResourcePackageQualifiers>
-    <AppxDefaultResourceQualifiers>Language=en</AppxDefaultResourceQualifiers>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -30,6 +29,9 @@
       <DeploymentContent>true</DeploymentContent>
       <Link>Assets\%(RecursiveDir)%(FileName)%(Extension)</Link>
     </Content>
+  </ItemGroup>
+  <ItemGroup>
+    <PRIResource Include="..\NanaGet\Strings\**\*.resw" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\NanaGet\NanaGet.vcxproj">
