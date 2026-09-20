@@ -1,5 +1,16 @@
 ﻿# NanaGet Release Notes
 
+**NanaGet 1.3 Update 3 (1.3.1609.0)**
+
+- Add localization strings for NanaGet Metadata File for the future development
+  and fixing the issue that only English localization in the package mode.
+  (Thanks to maisondasilva.)
+- Introduce taskbar notification icon for better user experience.
+- Try to several XAML UI issues via posting WM_CLOSE message instead of calling
+  DestroyWindow.
+- Implement NanaGet.Project based on NanaBox.Project to decouple more project
+  configurations from specific configuration profiles for all projects.
+
 **NanaGet 1.3 Update 2 (1.3.1607.0)**
 
 - Introduce Brazilian Portuguese translation. (Contributed by maisondasilva.)
